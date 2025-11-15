@@ -1,0 +1,7 @@
+
+sudo setxkbmap -layout us,cz -option 'grp:alt_shift_toggle'
+
+#trvale
+sudo nano /etc/default/keyboard
+XKBLAYOUT="us,cz"
+XKBOPTIONS="grp:alt_shift_toggle"
