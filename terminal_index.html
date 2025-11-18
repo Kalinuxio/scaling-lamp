@@ -1,0 +1,42 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Webový terminál</title>
+  <style>
+    body { background:#111; color:#0f0; font-family:monospace; padding:20px; }
+    #output { white-space:pre-wrap; margin-top:20px; }
+    input { width:300px; padding:6px; }
+    button { padding:6px 10px; }
+  </style>
+</head>
+
+<body>
+
+<h2>Webový terminál</h2>
+
+<input id="cmd" placeholder="Zadej příkaz…">
+<button onclick="run()">Spustit</button>
+
+<div id="output"></div>
+
+<script>
+async function run() {
+    const cmd = document.getElementById("cmd").value;
+
+    const res = await fetch("/run", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cmd })
+    });
+
+    const data = await res.json();
+
+    document.getElementById("output").innerText =
+        (data.stdout || "") + (data.stderr || "");
+}
+</script>
+
+</body>
+</html>
